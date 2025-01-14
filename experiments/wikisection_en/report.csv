@@ -1,0 +1,3 @@
+Model,Dataset,Language,Task,Run,Precision,Recall,F1,Accuracy
+mistral-nemo:12b-instruct-2407-fp16,wikisectionen,en,zero-shot,run_20241205_163000,0.0,0.0,0.0,0.33
+my_mistral_nemo:latest,wikisectionen,en,zero-shot,run_20241206_093113,8.71,14.11,9.99,18.78

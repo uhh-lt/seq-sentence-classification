@@ -1,0 +1,10 @@
+Model,Dataset,Language,Task,Run,Precision,Recall,F1,Accuracy
+my_llama_31:latest,daily_dialog,en,zero-shot,run_20241207_131836,24.38,29.95,26.16,30.6
+my_gemma_2:latest,daily_dialog,en,zero-shot,run_20241207_180327,30.13,34.21,31.32,40.83
+my_mistral_nemo:latest,daily_dialog,en,zero-shot,run_20241207_230234,24.74,28.63,26.25,31.14
+my_gemma_2:latest,daily_dialog,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241210_174557,31.52,31.11,30.85,37.51
+my_gemma_2:latest,daily_dialog,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_180802,27.32,19.78,22.6,26.44
+my_llama_31:latest,daily_dialog,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_002809,27.55,29.64,27.86,33.39
+my_llama_31:latest,daily_dialog,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_005307,26.21,27.0,25.83,30.02
+my_mistral_nemo:latest,daily_dialog,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_092457,26.98,29.25,27.46,36.59
+my_mistral_nemo:latest,daily_dialog,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_095420,25.34,28.39,26.3,35.26

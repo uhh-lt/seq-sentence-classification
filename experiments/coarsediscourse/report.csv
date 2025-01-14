@@ -1,0 +1,12 @@
+Model,Dataset,Language,Task,Run,Precision,Recall,F1,Accuracy
+my_llama_31:latest,coarsediscourse,en,zero-shot,run_20241207_115111,31.73,27.12,27.64,23.59
+my_gemma_2:latest,coarsediscourse,en,zero-shot,run_20241207_162727,34.64,34.25,33.28,32.36
+my_gemma_2:latest,coarsediscourse,en,zero-shot,run_20241209_014849,35.23,33.94,33.27,31.62
+my_mistral_nemo:latest,coarsediscourse,en,zero-shot,run_20241207_211226,31.46,32.79,30.85,30.14
+my_mistral_nemo:latest,coarsediscourse,en,zero-shot,run_20241209_050053,31.35,34.13,31.64,30.73
+my_gemma_2:latest,coarsediscourse,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241210_144913,38.53,13.39,18.21,11.77
+my_gemma_2:latest,coarsediscourse,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_155302,38.0,9.03,13.59,8.16
+my_llama_31:latest,coarsediscourse,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241210_214643,34.64,25.69,27.54,22.95
+my_llama_31:latest,coarsediscourse,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_230619,33.38,25.99,26.79,23.11
+my_mistral_nemo:latest,coarsediscourse,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_060558,33.92,33.19,31.94,31.47
+my_mistral_nemo:latest,coarsediscourse,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_073548,34.32,34.18,32.85,31.46

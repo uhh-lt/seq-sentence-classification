@@ -1,0 +1,2 @@
+FROM mistral-nemo:12b-instruct-2407-fp16
+PARAMETER num_ctx 32768

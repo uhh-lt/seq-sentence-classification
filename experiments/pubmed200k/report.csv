@@ -1,0 +1,13 @@
+Model,Dataset,Language,Task,Run,Precision,Recall,F1,Accuracy
+my_mistral_nemo:latest,pubmed200k,en,zero-shot,run_20241207_192427,40.32,51.29,44.81,69.72
+my_mistral_nemo:latest,pubmed200k,en,zero-shot,run_20241209_032505,41.28,52.42,45.85,70.98
+my_llama_31:latest,pubmed200k,en,zero-shot,run_20241207_103915,29.58,40.75,33.91,60.27
+my_llama_31:latest,pubmed200k,en,zero-shot,run_20241208_214500,29.68,40.33,33.8,59.3
+my_gemma_2:latest,pubmed200k,en,zero-shot,run_20241207_143816,49.81,57.36,52.88,73.32
+my_gemma_2:latest,pubmed200k,en,zero-shot,run_20241208_235826,49.35,56.33,52.2,71.81
+my_gemma_2:latest,pubmed200k,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241210_120750,56.14,58.68,56.93,72.02
+my_gemma_2:latest,pubmed200k,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_132024,60.35,44.14,50.43,51.93
+my_llama_31:latest,pubmed200k,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241210_195019,44.05,54.82,48.43,71.54
+my_llama_31:latest,pubmed200k,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_204838,46.17,53.46,49.22,69.93
+my_mistral_nemo:latest,pubmed200k,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_030146,49.55,60.19,53.95,76.06
+my_mistral_nemo:latest,pubmed200k,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_043207,49.55,60.52,54.04,75.95

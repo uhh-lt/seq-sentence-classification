@@ -1,0 +1,10 @@
+Model,Dataset,Language,Task,Run,Precision,Recall,F1,Accuracy
+my_llama_31:latest,emotion_lines,en,zero-shot,run_20241207_134535,23.96,24.84,23.19,28.61
+my_gemma_2:latest,emotion_lines,en,zero-shot,run_20241207_182955,34.98,33.72,33.26,46.92
+my_mistral_nemo:latest,emotion_lines,en,zero-shot,run_20241207_233516,18.61,19.33,18.68,27.64
+my_gemma_2:latest,emotion_lines,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241210_183522,34.67,27.06,29.86,33.06
+my_gemma_2:latest,emotion_lines,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_185924,33.75,22.62,26.85,29.55
+my_llama_31:latest,emotion_lines,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_011902,21.11,23.68,21.53,27.94
+my_llama_31:latest,emotion_lines,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_014841,21.09,24.26,22.19,27.98
+my_mistral_nemo:latest,emotion_lines,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_102532,22.85,23.11,22.49,28.61
+my_mistral_nemo:latest,emotion_lines,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_110059,23.0,26.07,23.99,32.61

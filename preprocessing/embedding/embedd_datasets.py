@@ -96,6 +96,7 @@ for dataset_name in train_paths.keys():
         batch_size = 2
         save_interval = 64
 
+        index = 0
         for i, row in tqdm(
             dataset[split].iterrows(), desc=f"Embedding {dataset_name} {split}"
         ):
@@ -121,7 +122,7 @@ for dataset_name in train_paths.keys():
             passage_embeddings_list.append(passage_embeddings.cpu())
 
             # Save to temporary files every save_interval iterations
-            if (i + 1) % save_interval == 0:
+            if (index + 1) % save_interval == 0:
                 query_temp_files.append(
                     save_embeddings_to_tempfile(
                         query_embeddings_list, f"{dataset_name}_query"
@@ -134,6 +135,8 @@ for dataset_name in train_paths.keys():
                 )
                 query_embeddings_list = []
                 passage_embeddings_list = []
+
+            index += 1
 
         # Save any remaining embeddings
         if query_embeddings_list:

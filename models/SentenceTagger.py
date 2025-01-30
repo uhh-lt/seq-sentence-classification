@@ -8,10 +8,9 @@ from torch import nn
 from pytorch_lightning import LightningModule
 from torchcrf import CRF
 import pandas as pd
-from pytorch_lightning.loggers import TensorBoardLogger
 from pathlib import Path
 from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
-
+from pytorch_lightning.loggers import MLFlowLogger
 
 
 def to_bio_format(labels: List[List[str]]) -> List[List[str]]:
@@ -173,7 +172,6 @@ class SentenceTagger(LightningModule):
 
         # Compute validation loss
         loss = self(sent_embs, tags=tags, mask=mask)
-        self.log("val_loss", loss)
 
         # Compute predictions
         preds = self(sent_embs, mask=mask)
@@ -274,10 +272,10 @@ class SentenceTagger(LightningModule):
     def _add_results_to_report(self, results: Dict[str, Union[str, float]]):
         # Access the logger and experiment name
         logger = self.logger
-        if isinstance(logger, TensorBoardLogger):
-            experiment_name = logger.version
+        if isinstance(logger, MLFlowLogger):
+            run_id = logger._run_id
         else:
-            experiment_name = "unknown"
+            run_id = "unknown"
 
         # read existing report, or create new one
         if self.report_path.exists():
@@ -287,7 +285,7 @@ class SentenceTagger(LightningModule):
 
         df_new = pd.DataFrame(
             {
-                "Run": [experiment_name],
+                "Run": [run_id],
                 **{k: [v] for k, v in results.items()},
             }
         )

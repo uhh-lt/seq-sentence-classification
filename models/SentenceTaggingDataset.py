@@ -93,7 +93,7 @@ class SentenceTaggingDataset(Dataset):
         ), f"Lengths must match: {len(padded_data)}, {len(padded_labels)}, {len(mask)}, {len(new_padded_data)}, {len(new_padded_labels)}, {len(new_mask)}"
 
         return (
-            torch.tensor(new_padded_data),
+            new_padded_data if isinstance(data[0][0], str) else torch.tensor(new_padded_data),
             torch.tensor(new_padded_labels),
             torch.tensor(new_mask, dtype=torch.bool),
         )

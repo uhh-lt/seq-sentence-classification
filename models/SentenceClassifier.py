@@ -5,10 +5,8 @@ from seqeval.metrics import classification_report
 import torch
 from torch import nn
 from pytorch_lightning import LightningModule
-from torchcrf import CRF
 import pandas as pd
 from pathlib import Path
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 from pytorch_lightning.loggers import MLFlowLogger
 
 from models.DatsetInputType import DatasetInputType
@@ -31,18 +29,20 @@ def to_bio_format(labels: List[List[str]]) -> List[List[str]]:
     return bio_labels
 
 
+
+
+
 class ValidationOutput(TypedDict):
     loss: List[float]
     predictions: List[List[int]]
     tags: List[List[int]]
 
 
-class SentenceTagger(LightningModule):
+class SentenceClassifier(LightningModule):
     def __init__(
         self,
         id2tag: Dict[int, str],
         hidden_dim=256,
-        use_lstm=True,
         learning_rate=1e-3,
         input_type=DatasetInputType.EMBEDDINGS,
         # used for input_type = EMBEDDINGS
@@ -74,17 +74,11 @@ class SentenceTagger(LightningModule):
                     for param in self.sentence_model.parameters():
                         param.requires_grad = False
 
-        if use_lstm:
-            self.lstm = nn.LSTM(
-                self.embedding_dim, hidden_dim, batch_first=True, bidirectional=True
-            )
-            linear_input_dim = 2 * hidden_dim  # Double the hidden_dim for bidirectional
-        else:
-            linear_input_dim = self.embedding_dim
-            self.lstm = None
-
+        linear_input_dim = self.embedding_dim
         self.linear = nn.Linear(linear_input_dim, len(id2tag))
-        self.crf = CRF(len(id2tag), batch_first=True)
+
+        # Define loss function
+        self.loss_fn = nn.CrossEntropyLoss()
 
         # Set training params
         self.tag2id = id2tag
@@ -92,7 +86,7 @@ class SentenceTagger(LightningModule):
 
         # Init outputs
         self.report_path = Path(
-            "./experiments/new-seq-tagger-report.csv"
+            "./experiments/sent-class-report.csv"
         )
         self.validation_outputs: ValidationOutput = {
             "loss": [],
@@ -106,77 +100,40 @@ class SentenceTagger(LightningModule):
         }
 
 
-    def forward(self, x, tags=None, mask=None):
-        assert mask is not None, "Mask must be provided"
-
+    def forward(self, x):
         if self.input_type == DatasetInputType.SENTENCES:
-            # x: (batch_size, seq_len, 1)
-            assert isinstance(x, List), "x must be a list of list of sentences"
-            assert isinstance(x[0], List), "x must be a list of list of sentences"
-            assert isinstance(x[0][0], str), "x must be a list of list of sentences"
+            # x: (batch_size, the_sentence)
+            assert isinstance(x, List), "x must be a list of sentences"
+            assert isinstance(x[0], str), "x must be a list of sentences"
 
             # Compute embeddings
-            embeddings = []
-            for sentences in x:  # Iterate over the batch
-                embeddings.append(
-                    self.sentence_model.encode(sentences, convert_to_tensor=True)
-                )
-            x = torch.stack(embeddings)
+            x = self.sentence_model.encode(x, convert_to_tensor=True)
         elif self.input_type == DatasetInputType.EMBEDDINGS:
-            # x: (batch_size, seq_len, embedding_dim)
-            assert x.dim() == 3, "x must be a 3D tensor"
-            assert x.size(2) == self.embedding_dim, "x must have the correct embedding dimension"
+            # x: (batch_size, embedding_dim)
+            assert x.dim() == 2, "x must be a 2D tensor"
+            assert x.size(1) == self.embedding_dim, "x must have the correct embedding dimension"
 
-        if self.lstm:
-            # Calculate lengths of valid sequences
-            lengths = mask.sum(dim=1).tolist()  
-
-            # Pack embeddings:
-            packed_embeddings = pack_padded_sequence(
-                x, lengths, batch_first=True, enforce_sorted=False
-            
-            )
-
-            # Pass packed sequence to LSTM
-            packed_output, _ = self.lstm(
-                packed_embeddings
-            )  
-
-             # Unpack the output
-            x, _ = pad_packed_sequence(
-                packed_output, batch_first=True
-            ) 
-
-        emissions = self.linear(x)
-
-        if tags is None:
-            # tags are not provided -> inference -> return predictions
-            return self.crf.decode(emissions, mask=mask)
-        else:
-            # tags are provided -> training -> calculate loss
-            return -self.crf(emissions, tags, mask=mask)  # Negative log-likelihood loss
+        logits = self.linear(x)
+        return logits
 
     def training_step(self, batch, batch_idx):
-        sent_embs, tags, mask = batch
-        loss = self(sent_embs, tags=tags, mask=mask)
+        data, tags = batch
+        logits = self(data)
+        loss = self.loss_fn(logits, tags)
         self.log("train_loss", loss)
         return loss
 
     def val_test_step(self, batch, batch_idx):
-        sent_embs, tags, mask = batch
+        data, tags = batch
 
         # Compute validation loss
-        loss = self(sent_embs, tags=tags, mask=mask)
+        logits = self(data)
+        loss = self.loss_fn(logits, tags)
 
         # Compute predictions
-        preds = self(sent_embs, mask=mask)
+        preds = torch.argmax(logits, dim=1).tolist()
 
-        # Extract ground truth tags
-        golds = []
-        for i in range(len(tags)):  # Iterate over the batch
-            golds.append(tags[i][mask[i] == 1].tolist())
-
-        return loss, preds, golds
+        return loss, preds, tags.tolist()
 
     def validation_step(self, batch, batch_idx):
         loss, preds, golds = self.val_test_step(batch, batch_idx)
@@ -184,8 +141,8 @@ class SentenceTagger(LightningModule):
         # log outputs
         self.log("val_loss", loss)
         self.validation_outputs["loss"].append(loss.item())
-        self.validation_outputs["predictions"].extend(preds)
-        self.validation_outputs["tags"].extend(golds)
+        self.validation_outputs["predictions"].append(preds)
+        self.validation_outputs["tags"].append(golds)
 
         return loss
 
@@ -195,8 +152,8 @@ class SentenceTagger(LightningModule):
         # log outputs
         self.log("test_loss", loss)
         self.test_outputs["loss"].append(loss.item())
-        self.test_outputs["predictions"].extend(preds)
-        self.test_outputs["tags"].extend(golds)
+        self.test_outputs["predictions"].append(preds)
+        self.test_outputs["tags"].append(golds)
 
         return loss
 
@@ -262,7 +219,9 @@ class SentenceTagger(LightningModule):
         }
 
     def configure_optimizers(self):
-        return torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
+        optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min")
+        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_loss"}
 
     def _add_results_to_report(self, results: Dict[str, Union[str, float]]):
         # Access the logger and experiment name

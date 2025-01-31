@@ -1,4 +1,7 @@
 import rootutils
+
+from models.DatsetInputType import DatasetInputType
+from models.SentenceClassificationDataset import SentenceClassificationDataset
 root_path = rootutils.find_root(search_from=__file__, indicator=[".git"])
 rootutils.set_root(
     path=root_path, # path to the root directory
@@ -20,8 +23,7 @@ from pathlib import Path
 import typer
 
 from mlflow.models import infer_signature
-from models.DatsetInputType import DatasetInputType
-from models.SentenceTagger import SentenceTagger
+from models.SentenceClassifier import SentenceClassifier
 from models.SentenceTaggingDataset import SentenceTaggingDataset
 import os
 
@@ -75,9 +77,6 @@ def do_experiment(
     assert dataset_name in val_paths, f"Validation Dataset {dataset_name} not found"
     assert dataset_name in test_paths, f"Test Dataset {dataset_name} not found"
 
-    # params
-    batch_size = 32
-
     # Load the dataframes
     print(f"Loading data for {dataset_name}")
     train_df = pd.read_parquet(
@@ -93,9 +92,9 @@ def do_experiment(
     # Create datasets
     print(f"Creating datasets for {dataset_name}")
     labels_key = "labels"
-    train_dataset = SentenceTaggingDataset(train_df, data_key, labels_key)
-    val_dataset = SentenceTaggingDataset(val_df, data_key, labels_key)
-    test_dataset = SentenceTaggingDataset(test_df, data_key, labels_key)
+    train_dataset = SentenceClassificationDataset(train_df, data_key, labels_key)
+    val_dataset = SentenceClassificationDataset(val_df, data_key, labels_key)
+    test_dataset = SentenceClassificationDataset(test_df, data_key, labels_key)
     assert (
         train_dataset.tags == val_dataset.tags == test_dataset.tags
     )
@@ -105,25 +104,24 @@ def do_experiment(
     # Create DataLoaders
     print(f"Creating dataloaders for {dataset_name}")
     train_dataloader = DataLoader(
-        train_dataset, batch_size=batch_size, shuffle=True, collate_fn=SentenceTaggingDataset.collate_fn
+        train_dataset, batch_size=None, shuffle=True,
     )
     val_dataloader = DataLoader(
-        val_dataset, batch_size=batch_size, collate_fn=SentenceTaggingDataset.collate_fn
+        val_dataset, batch_size=None,
     )
     test_dataloader = DataLoader(
-        test_dataset, batch_size=batch_size, collate_fn=SentenceTaggingDataset.collate_fn
+        test_dataset, batch_size=None,
     )   
 
     # Initialize the model
     print("Initializing the model")
-    model = SentenceTagger(
-        use_lstm=True,
+    model = SentenceClassifier(
         id2tag=train_dataset.id2tag,
         **model_config,
     )
 
     print("Starting the experiment")
-    mlflow.set_experiment("seq-sent-class")
+    mlflow.set_experiment("sent-class")
     with mlflow.start_run(
         description=description,
         tags={"dataset": dataset_name, "model_name": model_config["embedding_model_name"]},
@@ -165,7 +163,7 @@ def do_experiment(
 
         # Load the best model
         best_model_path = checkpoint.best_model_path
-        model = SentenceTagger.load_from_checkpoint(
+        model = SentenceClassifier.load_from_checkpoint(
             checkpoint_path=best_model_path,
             id2tag=test_dataset.id2tag,
         )
@@ -179,17 +177,13 @@ def do_experiment(
         trainer.test(model, test_dataloader)
 
         # Register the best model
-        embeddings, _, mask  = next(iter(test_dataloader))
-        example_input = {
-            "x": embeddings.numpy(),
-            "mask": mask.numpy(),
-        }
-        example_output = model(embeddings, mask=mask)
+        data, _  = next(iter(test_dataloader))
+        example_output = model(data)
         mlflow.pytorch.log_model(
             model, 
             artifact_path="best-model",
             signature=infer_signature(
-                model_input=example_input,
+                model_input=data,
                 model_output=example_output,
             )
         )
@@ -222,7 +216,6 @@ def compute_embeddings(dataset_name: str, model_name: str, freeze_model: bool):
             "freeze_embedding_model": freeze_model,
         }
     )
-
 
 
 if __name__ == "__main__":

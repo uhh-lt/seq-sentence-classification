@@ -69,7 +69,8 @@ def do_experiment(
     description: str,
     dataset_name: str,
     data_key: str,
-    model_config: ModelConfig
+    model_config: ModelConfig,
+    num_train_samples: Optional[int] = None,
 ):
     assert dataset_name in train_paths, f"Training Dataset {dataset_name} not found"
     assert dataset_name in val_paths, f"Validation Dataset {dataset_name} not found"
@@ -82,7 +83,7 @@ def do_experiment(
     print(f"Loading data for {dataset_name}")
     train_df = pd.read_parquet(
         Path(train_paths[dataset_name]).with_suffix(".embed.parquet")
-    )
+    )[:num_train_samples]
     val_df = pd.read_parquet(
         Path(val_paths[dataset_name]).with_suffix(".embed.parquet")
     )
@@ -123,10 +124,12 @@ def do_experiment(
     )
 
     print("Starting the experiment")
-    mlflow.set_experiment("seq-sent-class")
+    mlflow.set_experiment("seq-sent-class-new")
     with mlflow.start_run(
         description=description,
-        tags={"dataset": dataset_name, "model_name": model_config["embedding_model_name"]},
+        tags={"dataset": dataset_name, 
+              "model_name": model_config["embedding_model_name"], 
+              "num_train_samples": f"{num_train_samples}" if num_train_samples else "all"},
     ) as run:
         # Setup Logger
         logger = MLFlowLogger(
@@ -196,7 +199,7 @@ def do_experiment(
 
 
 @app.command()
-def precomputed_embeddings(dataset_name: str):
+def precomputed_embeddings(dataset_name: str, num_train_samples: Optional[int] = None):
     do_experiment(
         description="Sequence Tagger Model with Precomputed Sentence Embeddings",
         dataset_name=dataset_name,
@@ -206,7 +209,8 @@ def precomputed_embeddings(dataset_name: str):
             "embedding_dim": 4096,
             "embedding_model_name": "nvembed",
             "freeze_embedding_model": False,
-        }
+        },
+        num_train_samples=num_train_samples,
     )
 
 @app.command()

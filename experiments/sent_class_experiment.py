@@ -2,6 +2,7 @@ import rootutils
 
 from models.DatsetInputType import DatasetInputType
 from models.SentenceClassificationDataset import SentenceClassificationDataset
+from models.SentenceClassificationFlatDataset import SentenceClassificationFlatDataset
 root_path = rootutils.find_root(search_from=__file__, indicator=[".git"])
 rootutils.set_root(
     path=root_path, # path to the root directory
@@ -24,7 +25,6 @@ import typer
 
 from mlflow.models import infer_signature
 from models.SentenceClassifier import SentenceClassifier
-from models.SentenceTaggingDataset import SentenceTaggingDataset
 import os
 
 
@@ -92,7 +92,7 @@ def do_experiment(
     # Create datasets
     print(f"Creating datasets for {dataset_name}")
     labels_key = "labels"
-    train_dataset = SentenceClassificationDataset(train_df, data_key, labels_key)
+    train_dataset = SentenceClassificationFlatDataset(train_df, data_key, labels_key)
     val_dataset = SentenceClassificationDataset(val_df, data_key, labels_key)
     test_dataset = SentenceClassificationDataset(test_df, data_key, labels_key)
     assert (
@@ -103,8 +103,9 @@ def do_experiment(
 
     # Create DataLoaders
     print(f"Creating dataloaders for {dataset_name}")
+    # train with 32 batch size, but no batching for evaluation. We need to evaluate on a per-document level
     train_dataloader = DataLoader(
-        train_dataset, batch_size=None, shuffle=True,
+        train_dataset, batch_size=32, shuffle=True, collate_fn=SentenceClassificationFlatDataset.collate_fn
     )
     val_dataloader = DataLoader(
         val_dataset, batch_size=None,
@@ -218,5 +219,9 @@ def compute_embeddings(dataset_name: str, model_name: str, freeze_model: bool):
     )
 
 
-if __name__ == "__main__":
-    app()
+compute_embeddings("csabstruct", "sentence-transformers/all-mpnet-base-v2", False)
+
+
+
+# if __name__ == "__main__":
+    # app()

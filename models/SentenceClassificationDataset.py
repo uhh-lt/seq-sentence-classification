@@ -1,5 +1,5 @@
 import torch
-from torch.utils.data import Dataset, DataLoader
+from torch.utils.data import Dataset
 import pandas as pd
 import numpy as np
 
@@ -37,6 +37,3 @@ class SentenceClassificationDataset(Dataset):
             data if isinstance(data[0], str) else torch.tensor(data),
             torch.tensor(labels),
         )
-
-
-

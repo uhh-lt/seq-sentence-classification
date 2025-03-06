@@ -1,7 +1,5 @@
 from typing import Dict, List, Optional, TypedDict, Union
 from sentence_transformers import SentenceTransformer
-from seqeval.metrics import accuracy_score
-from seqeval.metrics import classification_report
 import torch
 from torch import nn
 from pytorch_lightning import LightningModule
@@ -9,27 +7,8 @@ import pandas as pd
 from pathlib import Path
 from pytorch_lightning.loggers import MLFlowLogger
 
+from metrics.compute_metrics import compute_metrics
 from models.DatsetInputType import DatasetInputType
-
-
-def to_bio_format(labels: List[List[str]]) -> List[List[str]]:
-    bio_labels = []
-    for label_list in labels:
-        bio_label_list = []
-        prev_label = "o"
-        for label in label_list:
-            if label == "o":
-                bio_label_list.append("O")
-            elif label != prev_label:
-                bio_label_list.append("B-" + label)
-            else:
-                bio_label_list.append("I-" + label)
-            prev_label = label
-        bio_labels.append(bio_label_list)
-    return bio_labels
-
-
-
 
 
 class ValidationOutput(TypedDict):
@@ -62,12 +41,20 @@ class SentenceClassifier(LightningModule):
                 self.embedding_dim = embedding_dim
 
             case DatasetInputType.SENTENCES:
-                assert embedding_model_name is not None, "embedding_model_name must be provided"
-                assert freeze_embedding_model is not None, "freeze_embedding_model must be provided"
+                assert (
+                    embedding_model_name is not None
+                ), "embedding_model_name must be provided"
+                assert (
+                    freeze_embedding_model is not None
+                ), "freeze_embedding_model must be provided"
 
                 self.sentence_model = SentenceTransformer(embedding_model_name)
-                self.embedding_dim = self.sentence_model.get_sentence_embedding_dimension()
-                assert self.embedding_dim is not None, "Model must return fixed-size embeddings"
+                self.embedding_dim = (
+                    self.sentence_model.get_sentence_embedding_dimension()
+                )
+                assert (
+                    self.embedding_dim is not None
+                ), "Model must return fixed-size embeddings"
 
                 # freeze the embedding model
                 if freeze_embedding_model:
@@ -81,13 +68,11 @@ class SentenceClassifier(LightningModule):
         self.loss_fn = nn.CrossEntropyLoss()
 
         # Set training params
-        self.tag2id = id2tag
+        self.id2tag = id2tag
         self.learning_rate = learning_rate
 
         # Init outputs
-        self.report_path = Path(
-            "./experiments/sent-class-report.csv"
-        )
+        self.report_path = Path("./experiments/sent-class-report.csv")
         self.validation_outputs: ValidationOutput = {
             "loss": [],
             "predictions": [],
@@ -98,7 +83,6 @@ class SentenceClassifier(LightningModule):
             "predictions": [],
             "tags": [],
         }
-
 
     def forward(self, x):
         if self.input_type == DatasetInputType.SENTENCES:
@@ -111,7 +95,9 @@ class SentenceClassifier(LightningModule):
         elif self.input_type == DatasetInputType.EMBEDDINGS:
             # x: (batch_size, embedding_dim)
             assert x.dim() == 2, "x must be a 2D tensor"
-            assert x.size(1) == self.embedding_dim, "x must have the correct embedding dimension"
+            assert (
+                x.size(1) == self.embedding_dim
+            ), "x must have the correct embedding dimension"
 
         logits = self.linear(x)
         return logits
@@ -157,30 +143,13 @@ class SentenceClassifier(LightningModule):
 
         return loss
 
-    def compute_metrics(self, outputs: ValidationOutput):
-        # convert predictions and golds to BIO format
-        preds = [
-            [self.tag2id[p] for p in predictions]
-            for predictions in outputs["predictions"]
-        ]
-        golds = [[self.tag2id[t] for t in tags] for tags in outputs["tags"]]
-        preds = to_bio_format(preds)
-        golds = to_bio_format(golds)
-
-        # compute metrics
-        avg_loss = torch.tensor(outputs["loss"]).mean()
-        acc = accuracy_score(golds, preds)
-
-        report = classification_report(golds, preds, output_dict=True)
-        df_report = pd.DataFrame(report)
-        precision, recall, f1, support = [
-            round(x * 100.0, 2) for x in df_report["weighted avg"].tolist()
-        ]        
-
-        return avg_loss, precision, recall, f1, acc
-
     def on_validation_epoch_end(self) -> None:
-        avg_loss, precision, recall, f1, acc = self.compute_metrics(self.validation_outputs)
+        avg_loss = torch.tensor(self.validation_outputs["loss"]).mean()
+        precision, recall, f1, acc = compute_metrics(
+            id2tag=self.id2tag,
+            preds=self.validation_outputs["predictions"],
+            golds=self.validation_outputs["tags"],
+        )
 
         self.log("val_avg_loss", avg_loss)
         self.log("val_precision", precision)
@@ -195,7 +164,12 @@ class SentenceClassifier(LightningModule):
         }
 
     def on_test_epoch_end(self) -> None:
-        avg_loss, precision, recall, f1, acc = self.compute_metrics(self.test_outputs)
+        avg_loss = torch.tensor(self.test_outputs["loss"]).mean()
+        precision, recall, f1, acc = compute_metrics(
+            id2tag=self.id2tag,
+            preds=self.test_outputs["predictions"],
+            golds=self.test_outputs["tags"],
+        )
 
         self.log("test_avg_loss", avg_loss)
         self.log("test_precision", precision)
@@ -221,7 +195,11 @@ class SentenceClassifier(LightningModule):
     def configure_optimizers(self):
         optimizer = torch.optim.AdamW(self.parameters(), lr=self.learning_rate)
         scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min")
-        return {"optimizer": optimizer, "lr_scheduler": scheduler, "monitor": "val_loss"}
+        return {
+            "optimizer": optimizer,
+            "lr_scheduler": scheduler,
+            "monitor": "val_loss",
+        }
 
     def _add_results_to_report(self, results: Dict[str, Union[str, float]]):
         # Access the logger and experiment name

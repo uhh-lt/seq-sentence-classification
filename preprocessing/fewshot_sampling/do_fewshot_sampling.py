@@ -1,6 +1,6 @@
 import pandas as pd
 from typing import List, Optional, Union
-from preprocessing.fewshot_sampling.fewshotsampler import Sample, FewshotSampler
+from fewshotsampler import Sample, FewshotSampler
 from pathlib import Path
 import concurrent.futures
 from typing import TypedDict
@@ -14,13 +14,13 @@ class Parameters(TypedDict):
 
 
 train_paths = [
-    # Path("../datasets/csabstruct/train.parquet"),
-    # Path("../datasets/pubmed200k/train.parquet"),
-    # Path("../datasets/coarsediscourse/coursediscourse_train.parquet"),
-    Path("../datasets/daily_dialog/dailydialog_train.parquet"),
-    # Path("../datasets/emotion_lines/friends_train.parquet"),
-    # Path("../datasets/wikisection/en/city/wikisection_en_city_train.parquet"),
-    # Path("../datasets/wikisection/de/city/wikisection_de_city_train.parquet"),
+    Path("../../datasets/csabstruct/train.parquet"),
+    # Path("../../datasets/pubmed200k/train.parquet"),
+    # Path("../../datasets/coarsediscourse/coursediscourse_train.parquet"),
+    # Path("../../datasets/daily_dialog/dailydialog_train.parquet"),
+    # Path("../../datasets/emotion_lines/friends_train.parquet"),
+    # Path("../../datasets/wikisection/en/city/wikisection_en_city_train.parquet"),
+    # Path("../../datasets/wikisection/de/city/wikisection_de_city_train.parquet"),
 ]
 
 for train_path in train_paths:
@@ -28,26 +28,27 @@ for train_path in train_paths:
     print(f"{train_path}: Number of samples: {len(df)}")
 
 other_tags_list = [
-    # ["o"],
+    ["o"],  
     # ["o"],
     # ["other"],
-    ["neutral"],
+    # ["neutral"],
     # ["neutral", "non-neutral"],
     # ["o"],
     # ["o"],
 ]
 
 is_span_annotation_list = [
-    # True,
+    True,
     # True,
     # False,
-    False,
+    # False,
     # False,
     # ["o"],
     # ["o"],
 ]
 
-the_must_include_ids: List[Union[None, int]] = [218, 438]
+the_must_include_ids: List[Union[None, int]] = [None]
+# [218, 438]
 
 
 def find_fewshot_samples(
@@ -184,7 +185,7 @@ def store_best_result(
         f.write(f'Threshold: {best_params["threshold"]}\n')
 
 
-K = 4
+K = 16
 seeds = [
     42,
     420,

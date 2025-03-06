@@ -10,3 +10,7 @@ my_llama_31:latest,coarsediscourse,en,few-shot-2-with-anno-guide-in-user-prompt,
 my_llama_31:latest,coarsediscourse,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_230619,33.38,25.99,26.79,23.11
 my_mistral_nemo:latest,coarsediscourse,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_060558,33.92,33.19,31.94,31.47
 my_mistral_nemo:latest,coarsediscourse,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_073548,34.32,34.18,32.85,31.46
+my_mistral_nemo:latest,coarsediscourse,en,few-shot-2,run_20250306_032100,30.04,31.36,29.51,29.22
+my_mistral_nemo:latest,coarsediscourse,en,few-shot-4,run_20250306_050630,29.49,29.38,28.22,27.31
+my_mistral_nemo:latest,coarsediscourse,en,few-shot-8,run_20250306_065312,30.98,29.76,29.35,26.53
+my_mistral_nemo:latest,coarsediscourse,en,few-shot-16,run_20250306_084642,0.0,0.0,0.0,0.0

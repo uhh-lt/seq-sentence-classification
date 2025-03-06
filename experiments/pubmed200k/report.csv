@@ -11,3 +11,7 @@ my_llama_31:latest,pubmed200k,en,few-shot-2-with-anno-guide-in-user-prompt,run_2
 my_llama_31:latest,pubmed200k,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241210_204838,46.17,53.46,49.22,69.93
 my_mistral_nemo:latest,pubmed200k,en,few-shot-2-with-anno-guide-in-user-prompt,run_20241211_030146,49.55,60.19,53.95,76.06
 my_mistral_nemo:latest,pubmed200k,en,few-shot-4-with-anno-guide-in-user-prompt,run_20241211_043207,49.55,60.52,54.04,75.95
+my_mistral_nemo:latest,pubmed200k,en,few-shot-2,run_20250305_212204,42.16,52.28,46.24,71.25
+my_mistral_nemo:latest,pubmed200k,en,few-shot-4,run_20250305_225300,39.45,51.39,44.12,69.29
+my_mistral_nemo:latest,pubmed200k,en,few-shot-8,run_20250306_002138,41.18,52.47,45.52,70.56
+my_mistral_nemo:latest,pubmed200k,en,few-shot-16,run_20250306_014837,38.11,48.09,41.85,67.38

@@ -519,11 +519,6 @@ class SentenceLLMEvaluator(LLMEvaluator):
 
 
 @app.command()
-def test(model: ModelsEnum, port: int, report_only: bool = False):
-    print("Testing SentenceLLMEvaluator")
-
-
-@app.command()
 def csabstruct(
     model: ModelsEnum,
     port: int,
